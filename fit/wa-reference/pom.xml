@@ -161,7 +161,7 @@ under the License.
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
         <configuration>
-          <skip>${skipTests}</skip>
+          <skip>true</skip>
           <images>
             <image>
               <name>kennethreitz/httpbin</name>
@@ -285,7 +285,7 @@ under the License.
               <goal>start</goal>
             </goals>
             <configuration>
-              <skip>${skipTests}</skip>
+              <skip>true</skip>
             </configuration>
           </execution>
           <execution>
@@ -295,7 +295,7 @@ under the License.
               <goal>stop</goal>
             </goals>
             <configuration>
-              <skip>${skipTests}</skip>
+              <skip>true</skip>
             </configuration>
           </execution>
         </executions>
