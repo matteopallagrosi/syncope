@@ -1,19 +1,17 @@
-package org.apache.syncope.core.spring.policy;
+package org.apache.syncope.core.workflow.java;
 
 import org.apache.syncope.common.lib.policy.DefaultAccountRuleConf;
-import org.apache.syncope.common.lib.to.UserTO;
-import org.apache.syncope.core.persistence.api.entity.PlainAttr;
 import org.apache.syncope.core.persistence.api.entity.PlainAttrUniqueValue;
-import org.apache.syncope.core.persistence.api.entity.PlainAttrValue;
-import org.apache.syncope.core.persistence.api.entity.PlainSchema;
 import org.apache.syncope.core.persistence.api.entity.user.UPlainAttr;
 import org.apache.syncope.core.persistence.api.entity.user.User;
 import org.apache.syncope.core.persistence.jpa.entity.JPAPlainSchema;
-import org.apache.syncope.core.persistence.jpa.entity.anyobject.JPAAPlainAttr;
-import org.apache.syncope.core.persistence.jpa.entity.anyobject.JPAAPlainAttrValue;
 import org.apache.syncope.core.persistence.jpa.entity.user.JPAUPlainAttr;
 import org.apache.syncope.core.persistence.jpa.entity.user.JPAUPlainAttrUniqueValue;
 import org.apache.syncope.core.persistence.jpa.entity.user.JPAUser;
+import org.apache.syncope.core.spring.policy.AccountPolicyException;
+import org.apache.syncope.core.spring.policy.DefaultAccountRule;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -157,10 +155,10 @@ public class AccountRuleTest {
 
         } catch(Exception e) {
             e.printStackTrace();
-            assertThat(e, instanceOf(expectedException));
+            Assert.assertThat(e, CoreMatchers.instanceOf(expectedException));
             return;
         }
-        assertNull(expectedException);
+        Assert.assertNull(expectedException);
     }
 
     //poichè non sono presenti i metodi setter di alcuni parametri, estendo la classe al fine di aggiungerli in quanto necessari per il testing
@@ -182,5 +180,4 @@ public class AccountRuleTest {
             this.getSuffixesNotPermitted().addAll(suffixes);
         }
     }
-
 }

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 @RunWith(value= Parameterized.class)
@@ -346,7 +347,9 @@ public class BinaryValidatorTest {
         } catch (Exception e) {
             e.printStackTrace();
             assertThat(e, instanceOf(expectedException));
+            return;
         }
+        assertNull(expectedException);
     }
 
     public enum Schema {
