@@ -1,5 +1,6 @@
 package org.apache.syncope.core.workflow.java;
 
+import org.apache.syncope.common.lib.policy.AbstractAccountRuleConf;
 import org.apache.syncope.common.lib.policy.DefaultAccountRuleConf;
 import org.apache.syncope.core.persistence.api.entity.PlainAttrUniqueValue;
 import org.apache.syncope.core.persistence.api.entity.user.UPlainAttr;
@@ -47,13 +48,15 @@ public class AccountRuleTest {
 
     private String username;
     private Class<Exception> expectedException;
+    private RuleConf confType;
 
 
 
 
-   public AccountRuleTest(int minLength, int maxLength, String pattern, boolean uppercase, boolean lowercase, String[] wordsNotPermitted,
+   public AccountRuleTest(RuleConf confType, int minLength, int maxLength, String pattern, boolean uppercase, boolean lowercase, String[] wordsNotPermitted,
                           String[] schemasNotPermitted, String[] prefixes, String[] suffixes, String username,
                           Class<Exception> expectedException ) {
+       this.confType = confType;
        this.minLength = minLength;
        this.maxLength = maxLength;
        this.pattern = pattern;
@@ -71,63 +74,96 @@ public class AccountRuleTest {
     public static Collection<Object[]> getParameters() {
         return Arrays.asList(new Object[][]{
                 // minLength, maxLength, pattern, uppercase, lowercase, wordsNotPermitted, schemasNotPermitted, prefixes, suffixes, username, expectedException
-                {0, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
-                {0, -1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
-                {0, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
-                {0, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", AccountPolicyException.class},
-                {1, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
-                {1, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", AccountPolicyException.class},
-                {1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
-                {1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "", AccountPolicyException.class},
-                {1, 2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Ab", null},
-                {1, 2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "", AccountPolicyException.class},
-                {-1, -1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
-                {-1, -2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
-                {-1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
+                {RuleConf.CONF_VALID, 0, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
+                {RuleConf.CONF_VALID, 0, -1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
+                {RuleConf.CONF_VALID, 0, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
+                {RuleConf.CONF_VALID, 0, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 1, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
+                {RuleConf.CONF_VALID, 1, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
+                {RuleConf.CONF_VALID, 1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 1, 2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Ab", null},
+                {RuleConf.CONF_VALID, 1, 2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, -1, -1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
+                {RuleConf.CONF_VALID, -1, -2, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
+                {RuleConf.CONF_VALID, -1, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
 
-                {0, 20, validRegex, true, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
-                {0, 20, validRegex, false, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
-                {0, 20, validRegex, false, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
-                {0, 20, validRegex, true, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "USERNAME", null},
-                {0, 20, validRegex, true, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
-                {0, 20, notValidRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", PatternSyntaxException.class},
-                {0, 20, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, true, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, true, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, true, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "USERNAME", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, true, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username.0", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, notValidRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", PatternSyntaxException.class},
+                {RuleConf.CONF_VALID, 0, 20, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "Username", null},
 
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "abtestwordab", AccountPolicyException.class},
-                {0, 20, validRegex, false, false, emptyList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "abtestwordab", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, emptyList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
 
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "userMario", AccountPolicyException.class},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedNotValid, prefixesList, suffixesList, "user", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedNotValid, prefixesList, suffixesList, "userRoma", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, emptyList, prefixesList, suffixesList, "user", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "userMario", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedNotValid, prefixesList, suffixesList, "user", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedNotValid, prefixesList, suffixesList, "userRoma", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, emptyList, prefixesList, suffixesList, "user", null},
 
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "testprefixUser", AccountPolicyException.class},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "usertestsuffix", AccountPolicyException.class},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, emptyList, suffixesList, "username", null},
-                {0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, emptyList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "testprefixUser", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "usertestsuffix", AccountPolicyException.class},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, emptyList, suffixesList, "username", null},
+                {RuleConf.CONF_VALID, 0, 20, validRegex, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, emptyList, "username", null},
+
+                {RuleConf.CONF_INVALID, 0, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", IllegalArgumentException.class},
+
+                {RuleConf.NULL, 0, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", NullPointerException.class},
         });
+    }
+
+    enum RuleConf {
+       CONF_VALID , CONF_INVALID , NULL
     }
 
     @Test
     public void enforceRulesTest() {
-        //inizializzo le regole che l'account deve rispettare
-        DefaultAccountRuleTestConf conf = new DefaultAccountRuleTestConf();
-        conf.setMaxLength(this.maxLength);
-        conf.setMinLength(this.minLength);
-        conf.setPattern(this.pattern);
-        conf.setAllUpperCase(this.uppercase);
-        conf.setAllLowerCase(this.lowerCase);
-        conf.setWordsNotPermitted(this.wordsNotPermitted);
-        conf.setSchemasNotPermitted(this.schemasNotPermitted);
-        conf.setPrefixes(this.prefixes);
-        conf.setSuffixes(this.suffixes);
-
-
         DefaultAccountRule accountRule = new DefaultAccountRule();
-        accountRule.setConf(conf);
+        switch (this.confType) {
+            case CONF_VALID :
+            {
+                //inizializzo le regole che l'account deve rispettare
+                DefaultAccountRuleTestConf conf = new DefaultAccountRuleTestConf();
+                conf.setMaxLength(this.maxLength);
+                conf.setMinLength(this.minLength);
+                conf.setPattern(this.pattern);
+                conf.setAllUpperCase(this.uppercase);
+                conf.setAllLowerCase(this.lowerCase);
+                conf.setWordsNotPermitted(this.wordsNotPermitted);
+                conf.setSchemasNotPermitted(this.schemasNotPermitted);
+                conf.setPrefixes(this.prefixes);
+                conf.setSuffixes(this.suffixes);
+                accountRule.setConf(conf);
+                break;
+            }
+            case CONF_INVALID: {
+                TestAccountRuleConf conf = new TestAccountRuleConf();
+                try {
+                    accountRule.setConf(conf);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    Assert.assertThat(e, CoreMatchers.instanceOf(expectedException));
+                    return;
+                }
+                break;
+            }
+            case NULL: {
+                try {
+                    accountRule.setConf(null);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    Assert.assertThat(e, CoreMatchers.instanceOf(expectedException));
+                    return;
+                }
+            }
+        }
 
         //creazione di uno user
         User user = new JPAUser();
@@ -179,5 +215,10 @@ public class AccountRuleTest {
         private void setSuffixes(List<String> suffixes) {
             this.getSuffixesNotPermitted().addAll(suffixes);
         }
+    }
+
+    //classe utilizzata al fine di rappresentare una istanza non valida, ossia un'istanza di una classe che NON estende DefaultAccountRuleConf
+    class TestAccountRuleConf extends AbstractAccountRuleConf {
+        private static final long serialVersionUID = -1803957511928491978L;
     }
 }
