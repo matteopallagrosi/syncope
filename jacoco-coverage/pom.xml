@@ -19,6 +19,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.syncope</groupId>
+            <artifactId>syncope-core</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.syncope.core</groupId>
             <artifactId>syncope-core-persistence-jpa</artifactId>
             <version>4.0.0-SNAPSHOT</version>
