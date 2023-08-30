@@ -35,7 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=matteopallagrosi_syncope
+        run: mvn -B -P jacoco-coverage verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=matteopallagrosi_syncope
       - name: Archive surefire reports
         uses: actions/upload-artifact@v3
         with:
