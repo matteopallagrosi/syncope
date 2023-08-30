@@ -1792,6 +1792,8 @@ under the License.
             <exclude>**/banner.txt</exclude>
             <exclude>**/target/**</exclude>
             <exclude>**/test/**</exclude>
+            <exclude>**/workflows/**</exclude>
+
           </excludes>
         </configuration>
         <executions>
