@@ -73,7 +73,7 @@ public class AccountRuleTest {
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
         return Arrays.asList(new Object[][]{
-                // minLength, maxLength, pattern, uppercase, lowercase, wordsNotPermitted, schemasNotPermitted, prefixes, suffixes, username, expectedException
+                // conf, minLength, maxLength, pattern, uppercase, lowercase, wordsNotPermitted, schemasNotPermitted, prefixes, suffixes, username, expectedException
                 {RuleConf.CONF_VALID, 0, 0, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
                 {RuleConf.CONF_VALID, 0, -1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "UserNameTest0", null},
                 {RuleConf.CONF_VALID, 0, 1, null, false, false, wordsNotPermittedList, schemasNotPermittedValid, prefixesList, suffixesList, "A", null},
