@@ -131,16 +131,6 @@ under the License.
           <artifactId>mockito-core</artifactId>
           <scope>test</scope>
       </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-      <dependency>
-          <groupId>org.mockito</groupId>
-          <artifactId>mockito-core</artifactId>
-          <scope>test</scope>
-      </dependency>
   </dependencies>
 
   <build>
@@ -149,6 +139,22 @@ under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
+
+      <!--mutation testing-->
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.14.4</version>
+        <configuration>
+          <targetClasses>
+            <param>org.apache.syncope.core.spring.security.DefaultPasswordGenerator</param>
+          </targetClasses>
+          <targetTests>
+            <param>org.apache.syncope.core.spring.security.*</param>
+          </targetTests>
+        </configuration>
+      </plugin>
+
     </plugins>
     <resources>
       <resource>

@@ -7,6 +7,8 @@ import org.apache.syncope.common.lib.types.ImplementationEngine;
 import org.apache.syncope.common.lib.types.PolicyType;
 import org.apache.syncope.core.persistence.api.entity.Implementation;
 import org.apache.syncope.core.persistence.api.entity.policy.PasswordPolicy;
+import org.apache.syncope.core.persistence.api.entity.user.LinkedAccount;
+import org.apache.syncope.core.persistence.api.entity.user.User;
 import org.apache.syncope.core.provisioning.api.rules.PasswordRule;
 import org.apache.syncope.core.provisioning.api.serialization.POJOHelper;
 import org.apache.syncope.core.spring.implementation.ImplementationManager;
@@ -36,8 +38,9 @@ public class PasswordGeneratorTest {
     private Class<Exception> expectedException;
     private List<PasswordPolicy> policies = new ArrayList<PasswordPolicy>();
     private boolean noPolicies = false;
+    private ConfType confType;
 
-    public PasswordGeneratorTest(PoliciesType policy, int minLength, int maxLength, int alphabetical, int uppercase, int lowercase, int digit, int special, Character[] specialChars, Class<Exception> expectedException) {
+    public PasswordGeneratorTest(PoliciesType policy, int minLength, int maxLength, int alphabetical, int uppercase, int lowercase, int digit, int special, Character[] specialChars, ConfType confType, Class<Exception> expectedException) {
         switch(policy) {
             case VALID: {
                 DefaultPasswordRuleConf passwordRuleConf = new DefaultPasswordRuleConf();
@@ -81,84 +84,92 @@ public class PasswordGeneratorTest {
             }
         }
 
+        this.confType = confType;
         this.expectedException = expectedException;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
         return Arrays.asList(new Object[][]{
-                // policies, minLength, maxLength, alphabetical, uppercase, lowercase, digit, special, specialChars, expectedException
+                // policies, minLength, maxLength, alphabetical, uppercase, lowercase, digit, special, specialChars, conf (aggiunto per aumento coverage), expectedException
 
                 //minLength e maxLength approccio multidimensionale (escludendo combinazioni non possibili)
-                {PoliciesType.VALID, NOT_INITIALIZED, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, -1, -2, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, -1, -1, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, -1, 0, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, -1, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, 0, -1, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, 0, 1, 1, 0, 0, 0, 0, emptyList, null},  //se la lunghezza minima è 0, viene settato al valore di default, se però questo è superiore alla lunghezza massima, minLength = maxLength
-                {PoliciesType.VALID, 0, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, 1, 0, 1, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 1, 1, 1, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 1, 2, 1, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 1, NOT_INITIALIZED, 1, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 1, 2, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 0, 2, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 3, 2, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, NOT_INITIALIZED, 2, 0, 0, 0, 0, emptyList, null},
+                {PoliciesType.VALID, NOT_INITIALIZED, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, -1, -2, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, -1, -1, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, -1, 0, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, -1, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, -1, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 1, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},  //se la lunghezza minima è 0, viene settato al valore di default, se però questo è superiore alla lunghezza massima, minLength = maxLength
+                {PoliciesType.VALID, 0, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 0, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 1, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 2, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, NOT_INITIALIZED, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 1, 2, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 0, 2, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 3, 2, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, NOT_INITIALIZED, 2, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
 
                 //approccio unidimensionale per il parametro alphabetical
-                {PoliciesType.VALID, 0, 0, 0, 2, 2, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 0, 0, -1, 2, 2, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 1, 0, 1, 0, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 0, 2, 0, 0, 0, 0, emptyList, null},
+                {PoliciesType.VALID, 0, 0, 0, 2, 2, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, -1, 2, 2, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 0, 1, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 0, 2, 0, 0, 0, 0, emptyList, ConfType.VALID, null},
 
                 //approccio unidimensionale per il parametro uppercase
-                {PoliciesType.VALID, 0, 0, 2, 0, 2, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, -1, 2, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 1, 0, 0, 1, 0, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 0, 0, 2, 0, 0, 0, emptyList, null},
+                {PoliciesType.VALID, 0, 0, 2, 0, 2, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, -1, 2, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 0, 0, 1, 0, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 0, 0, 2, 0, 0, 0, emptyList, ConfType.VALID, null},
 
                 //approccio unidimensionale per il parametro lowercase
-                {PoliciesType.VALID, 0, 0, 2, 2, 0, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, -1, 2, 2, specialChars, null},
-                {PoliciesType.VALID, 1, 0, 0, 0, 1, 0, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 0, 0, 0, 2, 0, 0, emptyList, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 0, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, -1, 2, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 0, 0, 0, 1, 0, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 0, 0, 0, 2, 0, 0, emptyList, ConfType.VALID, null},
 
                 //approccio unidimensionale per il parametro digit
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, -1, 2, specialChars, null},
-                {PoliciesType.VALID, 1, 0, 0, 0, 0, 1, 0, emptyList, null},
-                {PoliciesType.VALID, 2, 0, 0, 0, 0, 2, 0, emptyList, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, -1, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 1, 0, 0, 0, 0, 1, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 2, 0, 0, 0, 0, 2, 0, emptyList, ConfType.VALID, null},
 
                 //approccio multidimensionale per i parametri special e specialChars correllati tra loro (numero pari a 'special' di caratteri speciali devono essere estratti dalla lista 'specialChars')
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, emptyList, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, commonChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, emptyList, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, commonChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, emptyList, IllegalArgumentException.class}, //deve prelevare dei caratteri speciali, ma nessun carattere gli è stato fornito
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, commonChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, emptyList, IllegalArgumentException.class}, //deve prelevare dei caratteri speciali, ma nessun carattere gli è stato fornito
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, specialChars, null},
-                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, commonChars, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, 0, commonChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, emptyList, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 2, -1, commonChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, emptyList, ConfType.VALID, IllegalArgumentException.class}, //deve prelevare dei caratteri speciali, ma nessun carattere gli è stato fornito
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 1, 1, commonChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, emptyList, ConfType.VALID, IllegalArgumentException.class}, //deve prelevare dei caratteri speciali, ma nessun carattere gli è stato fornito
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, specialChars, ConfType.VALID, null},
+                {PoliciesType.VALID, 0, 0, 2, 2, 2, 0, 2, commonChars, ConfType.VALID, null},
 
                 //mi aspetto un eccezione BufferOverFlowException perchè ho richiesto di inserire più caratteri della lunghezza richiesta per la password
-                {PoliciesType.INVALID, 0, 0, 0, 0, 0, 0, 0, null, BufferOverflowException.class}, //quando la policy è non valida, la configurazione è definita direttamente nel costruttore
+                {PoliciesType.INVALID, 0, 0, 0, 0, 0, 0, 0, null, ConfType.VALID, BufferOverflowException.class}, //quando la policy è non valida, la configurazione è definita direttamente nel costruttore
 
-                {PoliciesType.EMPTY, 0, 0, 0, 0, 0, 0, 0, null, null},
+                {PoliciesType.EMPTY, 0, 0, 0, 0, 0, 0, 0, null, ConfType.VALID, null},
 
-                {PoliciesType.NULL, 0, 0, 0, 0, 0, 0, 0, null, NullPointerException.class} //quando la policy è nulla, i restanti parametri sono ignorati
+                {PoliciesType.NULL, 0, 0, 0, 0, 0, 0, 0, null, ConfType.VALID, NullPointerException.class}, //quando la policy è nulla, i restanti parametri sono ignorati
 
+                //casi di test aggiunti per aumentare coverage
+                {PoliciesType.VALID, NOT_INITIALIZED, NOT_INITIALIZED, 2, 2, 2, 2, 0, emptyList, ConfType.INVALID, null}, //quando la configurazione non è valida dovrebbe essere utilizzata una policy di default, stesso comportmamento di quando non è fornita alcuna policy
 
         });
     }
 
     enum PoliciesType {
         VALID, INVALID, EMPTY, NULL
+    }
+
+    //la configurazione è valida se istanza di DefaultPasswordRuleConf, altrimenti non è valida
+    enum ConfType {
+        VALID, INVALID
     }
 
     @Test
@@ -186,8 +197,21 @@ public class PasswordGeneratorTest {
         //Mocko la classe ImplementationManager su cui la costruzione delle regole si appoggia (per il test di unità suppongo che ImplementationManager funzioni come mi aspetto)
         try (MockedStatic mocked = mockStatic(ImplementationManager.class)) {
             mocked.when(()->ImplementationManager.buildPasswordRule(any(), any(), any())).thenAnswer(input -> {
-                PasswordRuleConf conf = POJOHelper.deserialize(mockedRule.getBody(), PasswordRuleConf.class);
-                PasswordRule rule = new DefaultPasswordRule();
+                PasswordRuleConf conf = null;
+                PasswordRule rule = null;
+                switch (this.confType) {
+                    case VALID: {
+                        conf = POJOHelper.deserialize(mockedRule.getBody(), PasswordRuleConf.class);
+                        rule = new DefaultPasswordRule();
+                        break;
+                    }
+                    case INVALID: {
+                        conf = new TestPasswordRuleConf();
+                        rule = new TestPasswordRule();
+                        noPolicies = true; //quando la configurazione non è valida dovrebbe essere utilizzata una policy di default, stesso comportmamento di quando non è fornita alcuna policy
+                    }
+                }
+                assert rule != null;
                 rule.setConf(conf);
                 return Optional.of(rule);
             });
@@ -243,7 +267,7 @@ public class PasswordGeneratorTest {
         int count = 0;
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (Character.isLetter(c)) { // Check if the character is a letter (alphabetical character)
+            if (Character.isLetter(c)) {
                 count++;
             }
         }
@@ -254,7 +278,7 @@ public class PasswordGeneratorTest {
         int count = 0;
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (Character.isDigit(c)) { // Check if the character is a digit
+            if (Character.isDigit(c)) {
                 count++;
             }
         }
@@ -265,7 +289,7 @@ public class PasswordGeneratorTest {
         int count = 0;
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (Character.isUpperCase(c)) { // Check if the character is uppercase
+            if (Character.isUpperCase(c)) {
                 count++;
             }
         }
@@ -276,7 +300,7 @@ public class PasswordGeneratorTest {
         int count = 0;
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (Character.isLowerCase(c)) { // Check if the character is uppercase
+            if (Character.isLowerCase(c)) {
                 count++;
             }
         }
@@ -288,7 +312,7 @@ public class PasswordGeneratorTest {
 
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (charList.contains(c)) { // Check if the character is in the list
+            if (charList.contains(c)) {
                 count++;
             }
         }
@@ -296,6 +320,41 @@ public class PasswordGeneratorTest {
         return count;
     }
 
+    class TestPasswordRule implements PasswordRule {
+
+        @Override
+        public PasswordRuleConf getConf() {
+            return PasswordRule.super.getConf();
+        }
+
+        @Override
+        public void setConf(PasswordRuleConf conf) {
+            PasswordRule.super.setConf(conf);
+        }
+
+        @Override
+        public void enforce(String username, String clearPassword) {
+
+        }
+
+        @Override
+        public void enforce(User user, String clearPassword) {
+
+        }
+
+        @Override
+        public void enforce(LinkedAccount account) {
+
+        }
+    }
+
+    class TestPasswordRuleConf implements PasswordRuleConf {
+
+        @Override
+        public String getName() {
+            return null;
+        }
+    }
 
 
     class TestPolicy implements PasswordPolicy {
