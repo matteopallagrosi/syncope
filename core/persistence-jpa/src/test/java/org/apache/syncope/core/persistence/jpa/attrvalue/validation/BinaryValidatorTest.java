@@ -9,6 +9,7 @@ import org.apache.syncope.core.persistence.api.entity.PlainSchema;
 import org.apache.syncope.core.persistence.jpa.entity.JPAPlainSchema;
 import org.apache.syncope.core.persistence.jpa.entity.anyobject.JPAAPlainAttr;
 import org.apache.syncope.core.persistence.jpa.entity.anyobject.JPAAPlainAttrValue;
+import org.apache.tika.Tika;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -29,6 +30,11 @@ public class BinaryValidatorTest {
     private PlainSchema schema;
     private PlainAttrValue attrValue;
     private Class<Exception> expectedException;
+    final static String NOT_VALID_JSON_OBJECT = "{test}";
+    final static String VALID_JSON_ARRAY = "[{\"id\": 28, \"Title\": \"Sweden\"}, {\"id\": 56, \"Title\": \"USA\"}]";
+    final static String NOT_VALID_JSON_ARRAY = "[test]";
+    final static String NOT_VALID_JSON_MIXED = "{test]";
+    final static String NOT_VALID_JSON_OTHER_MIXED = "[test}";
 
     public BinaryValidatorTest(Schema schemaType, Attribute attributeType, Class<Exception> expectedException) {
         schema = new JPAPlainSchema();
@@ -98,6 +104,7 @@ public class BinaryValidatorTest {
             }
             case NULL: {
                 schema = null;
+                break;
             }
         }
 
@@ -210,6 +217,57 @@ public class BinaryValidatorTest {
             }
             case NULL: {
                 attrValue = null;
+                break;
+            }
+
+            //casi aggiunti per aumentare coverage
+            case VALUE_MIMETYPE_EQUALS: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("text/plain");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(VALID_JSON.getBytes());
+                break;
+            }
+            case JSON_NOT_VALID_OBJECT: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("application/json");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(NOT_VALID_JSON_OBJECT.getBytes());
+                break;
+            }
+            case JSON_VALID_ARRAY: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("application/json");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(VALID_JSON_ARRAY.getBytes());
+                break;
+            }
+            case JSON_NOT_VALID_ARRAY: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("application/json");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(NOT_VALID_JSON_ARRAY.getBytes());
+                break;
+            }
+            case JSON_NOT_VALID_MIXED: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("application/json");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(NOT_VALID_JSON_MIXED.getBytes());
+                break;
+            }
+            case JSON_NOT_VALID_OTHER_MIXED: {
+                schema = new JPAPlainSchema();
+                schema.setMimeType("application/json");
+                plainAttr.setSchema(schema);
+                attrValue.setAttr(plainAttr);
+                attrValue.setBinaryValue(NOT_VALID_JSON_OTHER_MIXED.getBytes());
+                break;
             }
         }
 
@@ -221,6 +279,7 @@ public class BinaryValidatorTest {
         return Arrays.asList(new Object[][]{
                 // schema, attrValue, expectedException
                 {Schema.BINARY_VALID_EXISTENT, Attribute.SCHEMA_VALID, null},
+
                 {Schema.BINARY_VALID_EXISTENT, Attribute.OTHERSCHEMA_VALID, InvalidPlainAttrValueException.class},  //non viene indicato un tipo mime valido (un tipo Double non ha un mime type)
                 {Schema.BINARY_VALID_EXISTENT, Attribute.SCHEMA_NOT_VALID, InvalidPlainAttrValueException.class},
                 {Schema.BINARY_VALID_EXISTENT, Attribute.OTHERSCHEMA_NOT_VALID, InvalidPlainAttrValueException.class},
@@ -336,6 +395,14 @@ public class BinaryValidatorTest {
                 {Schema.NULL, Attribute.OTHERSCHEMA_NULLVALUE, null},
                 {Schema.NULL, Attribute.NULLSCHEMA_NULLVALUE, null},
                 {Schema.NULL, Attribute.NULL, NullPointerException.class},
+
+                //casi di test aggiunti per aumentare coverage
+                {Schema.NULL, Attribute.VALUE_MIMETYPE_EQUALS, null},
+                //{Schema.NULL, Attribute.JSON_NOT_VALID_OBJECT, InvalidPlainAttrValueException.class},    //ho un bug, perchè anche se la stringa non è un json, con le parentesi graffe la funzione la riconosce come tale
+                {Schema.NULL, Attribute.JSON_VALID_ARRAY, null},
+                {Schema.NULL, Attribute.JSON_NOT_VALID_ARRAY, InvalidPlainAttrValueException.class},
+                {Schema.NULL, Attribute.JSON_NOT_VALID_MIXED, InvalidPlainAttrValueException.class},
+                {Schema.NULL, Attribute.JSON_NOT_VALID_OTHER_MIXED, InvalidPlainAttrValueException.class}
         });
     }
 
@@ -365,7 +432,7 @@ public class BinaryValidatorTest {
         NULLTYPE_VALID_EXISTENT,
         NULLTYPE_VALID_NOT_EXISTENT,
         NULLTYPE_INVALID,
-        NULL
+        NULL,
     }
 
     public enum Attribute {
@@ -376,7 +443,15 @@ public class BinaryValidatorTest {
         SCHEMA_NULLVALUE,
         OTHERSCHEMA_NULLVALUE,
         NULLSCHEMA_NULLVALUE,
-        NULL
+        NULL,
+
+        //casi aggiunti per aumentare coverage
+        VALUE_MIMETYPE_EQUALS, //il binaryValue assegnato all'attributo e il mimeType associato non sono coerenti tra loro
+        JSON_NOT_VALID_OBJECT,
+        JSON_VALID_ARRAY,
+        JSON_NOT_VALID_ARRAY,
+        JSON_NOT_VALID_MIXED,
+        JSON_NOT_VALID_OTHER_MIXED
     }
 
     public static byte[] doubleToByteArray(double value) {
